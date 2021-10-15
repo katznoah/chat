@@ -28,17 +28,11 @@ const db = new sqlite3.Database('app.db');
 
 app.use(express.static('public'));
 
-app.get('/', function(req, res) {
+app.get('/*', function(req, res) {
     res.sendFile(path.join(path.resolve(path.dirname('')), 'public/index.html'));
 });
 
 app.listen(port, () => {console.log(`listening at http://localhost:${port}`);});
-
-//db.run(`insert into "users" values("1", "noahkatz", "pass1")`);
-//db.run(`insert into "servers" values("1", "hello world server!")`);
-//db.run(`insert into "servers" values("2", "hello world server part 2!")`);
-//db.run(`insert into "enrollments" values("1","1")`);
-//db.run(`insert into "enrollments" values("2","1")`);
 
 // db.run(`delete from "enrollments" where server_id != "0"`);
 // db.run('delete from "servers" where server_id != "0"');
@@ -54,7 +48,30 @@ app.post("/servers/*", (req, res) => {
         }
         for(let datum in data) {
             response[datum] = data[datum];
-        };
+        }
         res.send(response);
     });
+});
+
+app.post("/login/*", (req, res) => {
+    const url = req.url.split('/');
+    const email = url[2];
+    const pass = url[3];
+    
+});
+
+app.post("/repeat/*", (req, res) =>{
+    res.send('aaa');
+});
+
+app.post('reset/*', (req, res) => {
+    const email = req.url.split('/')[2];
+    auth.sendPasswordResetEmail(auth, email);
+});
+
+app.post('enterReset/*', (req, res) => {
+    const url = req.url.split('/');
+    const email = url[2];
+    const pass = url[3];
+    const code = url[4];
 });

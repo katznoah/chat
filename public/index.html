@@ -5,12 +5,34 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        label {
+            font-size: 175%;
+        }
+        input, button {
+            font-size: 150%;
+        }
+    </style>
 </head>
 <body>
     <div id="login">
-        
+        <label for="email">Email&emsp;</label>
+        <input id="email" type="email" name="email" placeholder="enter your email"><br><br>
+        <label for="password">Password&emsp;</label>
+        <input id="password" type="password" name="password" placeholder="enter your password"><br><br>
+        <div style="display: none;" id="login-reset">
+            <label for="resetCode">Password Reset Code&emsp;</label>
+            <input id="resetCode" name="resetCode" placeholder="enter your reset code"><br><br>
+            <button id="resetEnter" type="button">Enter</button>
+        </div>
+        <div id="login-pass">
+            <button id="loginButton" type="button">Login</button><br>
+            <button id="regButton" type="button">Register</button><br>
+            <button id="resetButton" type="button">Reset Your Password</button>
+            <p id="loginFailure" style="color: red; display: none;">email or password is incorrect, please try again.</p>
+        </div>
     </div>
-    <div id="servers">
+    <div style="display: none;" id="servers">
     </div>
     <footer>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
