@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAuth } from "firebase/auth";
+import { getAuth, confirmPasswordReset, sendPasswordResetEmail, signInWithEmailAndPassword} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDhjTPE6a4lg8sOvHVMEDGeznnRGrV1MSQ",
@@ -20,6 +20,7 @@ const rtdb = getDatabase(fbapp);
 import express from 'express';
 import path from 'path';
 import sqlite3 from 'sqlite3';
+import { sign } from "crypto";
 
 const app = express();
 const port = 3000;
@@ -42,8 +43,8 @@ app.post("/servers/*", (req, res) => {
     let response = {};
     db.all(`select server_name, servers.server_id from servers left join enrollments on servers.server_id = enrollments.server_id where uid = "${uid}"`, (err, data) => {
         if(err) {
-            console.log('query error');
-            res.send(response);
+            console.log('query error: error getting servers');
+            res.send('err');
             return;
         }
         for(let datum in data) {
@@ -57,21 +58,26 @@ app.post("/login/*", (req, res) => {
     const url = req.url.split('/');
     const email = url[2];
     const pass = url[3];
-    
+    signInWithEmailAndPassword(auth, email, pass).then((creds)=>{
+        const uid = (creds['_tokenResponse']['localId']);
+        res.end(uid);
+    });
 });
 
 app.post("/repeat/*", (req, res) =>{
     res.send('aaa');
 });
 
-app.post('reset/*', (req, res) => {
+app.post('/reset/*', (req, res) => {
     const email = req.url.split('/')[2];
-    auth.sendPasswordResetEmail(auth, email);
+    sendPasswordResetEmail(auth, email);
+    res.end(`${email} password resetting"`);
 });
 
-app.post('enterReset/*', (req, res) => {
+app.post('/enterReset/*', (req, res) => {
     const url = req.url.split('/');
-    const email = url[2];
-    const pass = url[3];
-    const code = url[4];
+    const pass = url[2];
+    const code = url[3];
+    confirmPasswordReset(auth, code, pass);
+    res.end("password reset");
 });
