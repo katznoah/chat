@@ -26,6 +26,7 @@ const port = 3000;
 
 const db = new sqlite3.Database('app.db');
 let modified = false;
+let lock = false;
 
 app.use(express.static('public'));
 
@@ -138,15 +139,21 @@ app.post('/updateMsg/:msg/:timestamp', (req, res) => {
     db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, () => {
         modified = true;
         res.send('updated');
-        setTimeout(() => {modified = false;}, 5000);
+        setTimeout(() => {modified = false;}, 3000);
     });
 });
 
 app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
+    if(lock) {
+        res.send('locked');
+        return;
+    }
+    lock = true;
     modified = true;
     try {
         db.run(`insert into "messages" values("${new Date()}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`);
     } catch(err) {}
-    setTimeout(() => {modified = false;}, 5000);
+    setTimeout(() => {modified = false;}, 3000);
+    setTimeout(() => {lock = false;}, 1001);
     res.send('msg sent');
 });

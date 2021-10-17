@@ -4,8 +4,6 @@ let msgUpdate;
 
 $('document').ready(() => {
 
-    location.href='/#';
-
     login();
 
     $(window).on('hashchange ready', function( e ) {
@@ -38,9 +36,21 @@ $('document').ready(() => {
         $.post(`newMsg/${$('#msgInputBox').val()}/${currServer}/${uid}`);
     });
 
+    $('#msgInput').on('keypress', (key) => {
+        if(key.keyCode != 13) return;
+        $.post(`newMsg/${$('#msgInputBox').val()}/${currServer}/${uid}`);
+    });
+
     $('#createSubmit').on('click', () => {
         $('#newServer').slideToggle();
-    }); 
+    });
+
+    $('#submitNewServer').on('click', () => {
+        const serverName = $('#newServerName').val();
+        if(!serverName) {
+            $('#newServerFailure').slideDown(() => {setTimeout(() => {$('#newServerFailure').sldeUp();},2000);});
+        }
+    });
 
 });
 
@@ -79,12 +89,19 @@ const loginSuccess = (email) => {
                     location.href='/#';
                     setTimeout(() => {location.href=`/#${newTag.id}`;}, 100);
                     $('#peopleList').html();
-                    
                 });
             }
             $('#nameDisplay').html(email);
             $('#navBar').slideToggle();
-            $('#msgInput').slideToggle();
+            $('#msgInput').slideToggle(() => {
+                if(+(window.location.hash.substring(1))) {
+                    initGetMessages();
+                    currServer = +(window.location.hash.substring(1));
+                    clearInterval(msgUpdate);
+                    if(window.location.hash.length < 2) return;
+                    msgUpdate = setInterval(() => {getMessages()}, 1000);
+                }
+            });
         });
     });
 };
@@ -133,6 +150,7 @@ const initGetMessages = () => { // this is the initial call for when a server is
             $('#messages').append(makeMessage(d['message'],d['username'],d['message_date'],d['edited']));
             $('#messages').append('<hr>');
         }
+        setTimeout(() => {$('html, body').scrollTop($(document).height(), 'slow');}, 500);
     });
 };
 
@@ -145,21 +163,28 @@ const logout = () => {
 }
 
 const makeMessage = (msg, un, ts, e) => {
+    console.log(e);
     let newTag = document.createElement('li');
-    newTag.classList.add('message');
     let username = document.createElement('p');
     let message = document.createElement('p');
     let timestamp = document.createElement('p');
     let edited = document.createElement('p');
     let editField = document.createElement('input');
     editField.classList.add('hidden');
-    newTag.addEventListener('click', () => {
-        if(editField.classList.contains('hidden'))
-            editField.classList.remove('hidden');
-    });
+    editField.placeholder = 'edit your message';
+    newTag.classList.add('message');
+    setTimeout(() => {
+        newTag.classList.add('messageA');
+        newTag.addEventListener('click', () => {
+            if(editField.classList.contains('hidden'))
+                editField.classList.remove('hidden');
+        });
+    }, 2000);
     editField.addEventListener('keypress', (key) => {
+        let newMsg = editField.value;
+        newMsg = newMsg ? newMsg : ' ';
         if(key.keyCode == 13) {
-            $.post(`updateMsg/${editField.value}/${ts}`, () => {
+            $.post(`updateMsg/${newMsg}/${ts}`, () => {
                 editField.classList.add('hidden');
             });
         }
