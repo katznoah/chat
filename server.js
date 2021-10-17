@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAuth, confirmPasswordReset, sendPasswordResetEmail, signInWithEmailAndPassword} from "firebase/auth";
+import { getAuth, signOut, confirmPasswordReset, sendPasswordResetEmail, signInWithEmailAndPassword} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDhjTPE6a4lg8sOvHVMEDGeznnRGrV1MSQ",
@@ -20,12 +20,12 @@ const rtdb = getDatabase(fbapp);
 import express from 'express';
 import path from 'path';
 import sqlite3 from 'sqlite3';
-import { sign } from "crypto";
 
 const app = express();
 const port = 3000;
 
 const db = new sqlite3.Database('app.db');
+let modified = false;
 
 app.use(express.static('public'));
 
@@ -34,9 +34,6 @@ app.get('/*', function(req, res) {
 });
 
 app.listen(port, () => {console.log(`listening at http://localhost:${port}`);});
-
-// db.run(`delete from "enrollments" where server_id != "0"`);
-// db.run('delete from "servers" where server_id != "0"');
 
 app.post("/servers/*", (req, res) => {
     const uid = req.url.split('/')[2];
@@ -58,10 +55,12 @@ app.post("/login/*", (req, res) => {
     const url = req.url.split('/');
     const email = url[2];
     const pass = url[3];
-    signInWithEmailAndPassword(auth, email, pass).then((creds)=>{
-        const uid = (creds['_tokenResponse']['localId']);
-        res.end(uid);
-    });
+    try {
+        signInWithEmailAndPassword(auth, email, pass).then((creds)=>{
+            const uid = (creds['_tokenResponse']['localId']);
+            res.end(uid);
+        }).catch(err => {res.end('');});
+    } catch(err) {res.end('');}
 });
 
 app.post("/repeat/*", (req, res) =>{
@@ -80,4 +79,74 @@ app.post('/enterReset/*', (req, res) => {
     const code = url[3];
     confirmPasswordReset(auth, code, pass);
     res.end("password reset");
+});
+
+app.post('/getMessages/:uid/:server_id', (req, res) => {
+    if(!modified) {
+        res.send('nm');
+        return;
+    }
+    const server_id = req.params.server_id;
+    const uid = req.params.uid;
+    let role = '';
+    let server_name = '';
+    db.get(`select role, server_name from enrollments left join servers on servers.server_id = enrollments.server_id where uid = "${uid}" and enrollments.server_id = "${server_id}"`, (err, data) => {
+        if(err || !data) {
+            console.log(err);
+            return;
+        };
+        server_name = data['server_name'];
+        role = data['role'];
+        db.all(`select messages.message, messages.message_date, users.username, messages.edited from messages left join users on messages.uid = users.uid where server_id = "${server_id}"`, (err, msg_data) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            res.json({'server_name': server_name, 'role': role, 'data': msg_data});
+        });
+    });
+});
+
+app.post('/initGetMessages/:uid/:server_id', (req, res) => {
+    const server_id = req.params.server_id;
+    const uid = req.params.uid;
+    let role = '';
+    let server_name = '';
+    db.get(`select role, server_name from enrollments left join servers on servers.server_id = enrollments.server_id where uid = "${uid}" and enrollments.server_id = "${server_id}"`, (err, data) => {
+        if(err || !data) {
+            console.log(err);
+            return;
+        };
+        server_name = data['server_name'];
+        role = data['role'];
+        db.all(`select messages.message, messages.message_date, users.username, messages.edited from messages left join users on messages.uid = users.uid where server_id = "${server_id}"`, (err, msg_data) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            res.json({'server_name': server_name, 'role': role, 'data': msg_data});
+        });
+    });
+});
+
+app.post('/logout/:uid', (req, res) => {
+    signOut(auth);
+    res.send('logout successful');
+});
+
+app.post('/updateMsg/:msg/:timestamp', (req, res) => {
+    db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, () => {
+        modified = true;
+        res.send('updated');
+        setTimeout(() => {modified = false;}, 5000);
+    });
+});
+
+app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
+    modified = true;
+    try {
+        db.run(`insert into "messages" values("${new Date()}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`);
+    } catch(err) {}
+    setTimeout(() => {modified = false;}, 5000);
+    res.send('msg sent');
 });

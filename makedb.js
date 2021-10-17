@@ -14,10 +14,14 @@ let db = new sqlite3.Database("app.db");
 //db.run(`insert into "servers" values("2", "hello world server part 2!")`);
 //db.run(`insert into "enrollments" values("1","0JpHLS5cbPM3PZbyj9mr6mFc20t2","admin")`);
 //db.run(`insert into "enrollments" values("2","0JpHLS5cbPM3PZbyj9mr6mFc20t2","user")`);
+db.run(`delete from messages where server_id != "0"`);
+//db.run(`insert into "messages" values("${new Date()}","0JpHLS5cbPM3PZbyj9mr6mFc20t2", "hello this is my message", "1","")`);
 
-db.all(`select name, sql from sqlite_master where name not like "%auto%"`, (err, data) => {
+/*db.all(`select name, sql from sqlite_master where name not like "%auto%"`, (err, data) => {
     if(err) throw new Error();
     for(let datum in data) {
         console.log(`${data[datum]['name']}: ${data[datum]['sql']}`);
     }
-});
+});*/
+
+db.all('select * from messages', (err, data) => {console.log(data);});
