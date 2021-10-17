@@ -22,7 +22,7 @@ import path from 'path';
 import sqlite3 from 'sqlite3';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 const db = new sqlite3.Database('app.db');
 let modified = false;
