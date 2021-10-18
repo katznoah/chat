@@ -236,7 +236,8 @@ const makeMessage = (msg, un, ts, e) => {
     username.innerText = un;
     timestamp.innerText = ts;
     edited.innerText = e;
-    newTag.append(username, timestamp, message, edited, editField);
+    newTag.append(username, timestamp, message, edited);
+    if(un == $('#nameDisplay').html()) newTag.append(editField);
     return newTag;
 }
 
