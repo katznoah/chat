@@ -189,8 +189,11 @@ const logout = () => {
 const makeMessage = (msg, un, ts, e) => {
     let newTag = document.createElement('li');
     let username = document.createElement('p');
+    username.classList.add('username');
     let message = document.createElement('p');
+    message.classList.add('messagetxt');
     let timestamp = document.createElement('p');
+    timestamp.classList.add('timestamp');
     let edited = document.createElement('p');
     let editField = document.createElement('input');
     editField.classList.add('hidden');
@@ -233,7 +236,7 @@ const makeMessage = (msg, un, ts, e) => {
     username.innerText = un;
     timestamp.innerText = ts;
     edited.innerText = e;
-    newTag.append(username, message, timestamp, edited, editField);
+    newTag.append(username, timestamp, message, edited, editField);
     return newTag;
 }
 
