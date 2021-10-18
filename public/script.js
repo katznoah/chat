@@ -27,6 +27,10 @@ $('document').ready(() => {
         login();
     });
 
+    $('#regButton').on('click', () => {
+        register();
+    });
+
     $('#resetButton').on('click', () => {
         $.post(`reset/${$('#email').val()}`);
     });
@@ -55,10 +59,17 @@ $('document').ready(() => {
             $('#newServerFailure').slideDown(() => {setTimeout(() => {$('#newServerFailure').sldeUp();},2000);});
             return;
         }
-        //$.post(`/newServer/${uid}`)
+        $.post(`/newServer/${uid}/${serverName}`, null, (res) => {
+            location.reload();
+        });
     });
 
-    $('#newServerName')
+    $('#joinSubmit').on('click', () => {
+        const scode = $('#joinInput').val();
+        $.post(`/joinServer/${uid}/${scode}`, (res) => {
+            location.reload();
+        });
+    });
 
 });
 
@@ -136,9 +147,10 @@ const loginFailure = () => { // this handles what happens when the login has fai
 };
 
 const getMessages = () => { // this is called in a loop, and checks if there has been a modification to the data before re-rendering
-    $.post(`/getMessages/${uid}/${window.location.hash.substring(1)}`, null, res => {
+    const server_num = window.location.hash.substring(1);
+    $.post(`/getMessages/${uid}/${server_num}`, null, res => {
         if(res == 'nm') return;
-        $('#messages').html(`<h3>${res['server_name']}</h3><hr>`);
+        $('#messages').html(`<h3>${res['server_name']}: ${server_num}</h3><hr>`);
         $('#messages').slideDown();
         for(datum in res['data']) {
             let d = (res['data'][datum]);
@@ -151,9 +163,10 @@ const getMessages = () => { // this is called in a loop, and checks if there has
 };
 
 const initGetMessages = () => { // this is the initial call for when a server is loaded
-    $.post(`/initGetMessages/${uid}/${window.location.hash.substring(1)}`, null, res => {
+    const server_num = window.location.hash.substring(1);
+    $.post(`/initGetMessages/${uid}/${server_num}`, null, res => {
         $('#messages').html('');
-        $('#messages').html(`<h3>${res['server_name']}</h3><hr>`);
+        $('#messages').html(`<h3>${res['server_name']}: ${server_num}</h3><hr>`);
         $('#messages').slideDown();
         for(datum in res['data']) {
             let d = (res['data'][datum]);
@@ -220,7 +233,7 @@ const getPeople = () => {
 };
 
 const createPerson = (username, user_id, role) => {
-    //if(user_id==uid) return;
+    if(user_id==uid) return;
     let newTag = document.createElement('div');
     let name = document.createElement('a');
     let changeRole = document.createElement('a');
@@ -228,11 +241,11 @@ const createPerson = (username, user_id, role) => {
     name.innerText = `${username} : ${role}`;
     name.classList.add('dropdown-item');
     changeRole.classList.add('dropdown-item');
-    changeRole.innerText = (role == 'admin') ? 'Role -> Admin' : 'Role -> User';
+    changeRole.innerText = (role == 'admin') ? 'Role -> User' : 'Role -> Admin';
     divider.classList.add('dropdown-divider');
     newTag.append(name);
     changeRole.addEventListener('click', () => {
-        $.post(`/changeRole/${user_id}/${currSrver}`, null, (res) => {
+        $.post(`/changeRole/${user_id}/${+(window.location.hash.substring(1))}`, null, (res) => {
             getPeople();
         });
     });
@@ -242,4 +255,15 @@ const createPerson = (username, user_id, role) => {
         newTag.append(divider);
     });
     return newTag;
+};
+
+const register = () => {
+    const email = $('#email').val();
+    const pass = $('#password').val();
+    $.post(`/register/${email}/${pass}`, (res) => {
+        localStorage['email'] = email;
+        localStorage['pass'] = pass;
+        uid = res;
+        login();
+    });
 };

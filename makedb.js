@@ -1,5 +1,5 @@
-import sqlite3 from 'sqlite3';
-let db = new sqlite3.Database("app.db");
+//import sqlite3 from 'sqlite3';
+//let db = new sqlite3.Database("app.db");
 
 //db.run(`drop table enrollments`);
 //db.run('drop table messages');
@@ -14,9 +14,10 @@ let db = new sqlite3.Database("app.db");
 //db.run(`insert into "servers" values("2", "hello world server part 2!")`);
 //db.run(`insert into "enrollments" values("1","0JpHLS5cbPM3PZbyj9mr6mFc20t2","admin")`);
 //db.run(`insert into "enrollments" values("2","0JpHLS5cbPM3PZbyj9mr6mFc20t2","user")`);
-db.run(`delete from enrollments where server_id != "1"`);
+//db.run(`delete from enrollments where server_id != "1"`);
 //db.run(`insert into "messages" values("${new Date()}","0JpHLS5cbPM3PZbyj9mr6mFc20t2", "hello this is my message", "1","")`);
-
+//db.run('insert into "servers" values("1337", "General Chat")');
+//db.run('insert into "enrollments" values("1337", "0JpHLS5cbPM3PZbyj9mr6mFc20t2", "user")');
 /*db.all(`select name, sql from sqlite_master where name not like "%auto%"`, (err, data) => {
     if(err) throw new Error();
     for(let datum in data) {
@@ -24,4 +25,16 @@ db.run(`delete from enrollments where server_id != "1"`);
     }
 });*/
 
-db.all('select * from enrollments', (err, data) => {console.log(data);});
+//db.run(`update "enrollments" set role = "admin" where uid = "0JpHLS5cbPM3PZbyj9mr6mFc20t2" and server_id = "1"`);
+/*
+db.all('select server_id from servers', (err, data) => {
+    let nums = [];
+    for(let item in data) {
+        nums.push(+(data[item]['server_id']));
+    }
+    const max = (nums.sort((a,b) => a - b)[nums.length-1]);
+    console.log(max);
+});*/
+
+//db.run('delete from "servers" where server_id != "1337"');
+//db.all('select * from servers', (err, data) => {console.log(data)});

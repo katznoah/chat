@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAuth, signOut, confirmPasswordReset, sendPasswordResetEmail, signInWithEmailAndPassword} from "firebase/auth";
+import { getAuth, signOut, confirmPasswordReset, sendPasswordResetEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDhjTPE6a4lg8sOvHVMEDGeznnRGrV1MSQ",
@@ -138,12 +138,11 @@ app.post('/logout/:uid', (req, res) => {
 });
 
 app.post('/updateMsg/:msg/:timestamp', (req, res) => {
-    try {
-        db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, () => {
+    db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, (err, data) => {
         modified = true;
         res.send('updated');
         setTimeout(() => {modified = false;}, 3000);
-    }); } catch (err) {res.send('err');}
+    });
 });
 
 app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
@@ -154,7 +153,9 @@ app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
     lock = true;
     modified = true;
     try {
-        db.run(`insert into "messages" values("${new Date()}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`);
+        db.run(`insert into "messages" values("${new Date()}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`, (err, data) => {
+
+        });
     } catch(err) {}
     setTimeout(() => {modified = false;}, 3000);
     setTimeout(() => {lock = false;}, 1001);
@@ -187,9 +188,53 @@ app.post(`/changeRole/:user_id/:currSrver`, (req, res) => {
             res.send('err');
             return;
         }
-        let newRole = (res['role'] == 'admin') ? 'user' : 'admin';
+        let newRole = (data['role'] == 'admin') ? 'user' : 'admin';
         db.run(`update "enrollments" set role = "${newRole}" where uid = "${req.params.user_id}" and server_id = "${req.params.currSrver}"`, (data2, err2) => {
             res.send('complete');
         });
+    });
+});
+
+app.post(`/newServer/:uid/:serverName`, (req, res) => {
+    db.get(`select * from servers where server_name = "${req.params.serverName}"`, (err, data) => {
+        if(data) {
+            res.send('ae');
+            return;
+        }
+        db.all('select server_id from servers', (err, data) => {
+            let nums = [];
+            for(let item in data) {
+                nums.push(+(data[item]['server_id']));
+            }
+            const max = (nums.sort((a,b) => a - b)[nums.length-1]) + 1;
+            db.run(`insert into "servers" values("${max}","${req.params.serverName}")`);
+            db.run(`insert into "enrollments" values("${max}","${req.params.uid}", "admin")`);
+            res.send('max');
+        });        
+    });
+});
+
+app.post('/joinServer/:uid/:server_id', (req, res) => {
+    db.get(`select * from servers where server_id = "${req.params.server_id}"`, (err, data) => {
+        if(!data) {
+            res.send('server not found');
+            return;
+        }
+        db.run(`insert into "enrollments" values("${req.params.server_id}", "${req.params.uid}", "user")`, (err, data) => {
+            if(data) res.send(`${req.params.uid} joined ${req.params.server_id}`);
+            else res.send('err');
+        });
+    });
+});
+
+app.post('/register/:email/:pass', (req, res) => {
+    const email = req.params.email;
+    const pass = req.params.pass;
+    createUserWithEmailAndPassword(auth, email, pass).then((creds)=>{
+        db.run(`insert into "users" values("${creds['_tokenResponse']['localId']}", "${email}")`);
+        db.run(`insert into "enrollments" values("1337", "${creds['_tokenResponse']['localId']}", "user")`);
+        res.send(creds['_tokenResponse']['localId']);
+    }, (reason) => {
+        res.send('f');
     });
 });
