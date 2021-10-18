@@ -14,7 +14,7 @@ let db = new sqlite3.Database("app.db");
 //db.run(`insert into "servers" values("2", "hello world server part 2!")`);
 //db.run(`insert into "enrollments" values("1","0JpHLS5cbPM3PZbyj9mr6mFc20t2","admin")`);
 //db.run(`insert into "enrollments" values("2","0JpHLS5cbPM3PZbyj9mr6mFc20t2","user")`);
-db.run(`delete from messages where server_id != "0"`);
+db.run(`delete from enrollments where server_id != "1"`);
 //db.run(`insert into "messages" values("${new Date()}","0JpHLS5cbPM3PZbyj9mr6mFc20t2", "hello this is my message", "1","")`);
 
 /*db.all(`select name, sql from sqlite_master where name not like "%auto%"`, (err, data) => {
@@ -24,4 +24,4 @@ db.run(`delete from messages where server_id != "0"`);
     }
 });*/
 
-db.all('select * from messages', (err, data) => {console.log(data);});
+db.all('select * from enrollments', (err, data) => {console.log(data);});

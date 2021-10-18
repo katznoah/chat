@@ -10,7 +10,10 @@ $('document').ready(() => {
         initGetMessages();
         currServer = +(window.location.hash.substring(1));
         clearInterval(msgUpdate);
-        if(window.location.hash.length < 2) return;
+        if(window.location.hash.length < 2) {
+            $('#messages').slideUp();
+            return;
+        };
         msgUpdate = setInterval(() => {getMessages()}, 1000);
     });
 
@@ -34,6 +37,7 @@ $('document').ready(() => {
 
     $('#sendButton').on('click', () => {
         $.post(`newMsg/${$('#msgInputBox').val()}/${currServer}/${uid}`);
+        setTimeout(() => {$('html, body').scrollTop($(document).height(), 'slow');}, 500);
     });
 
     $('#msgInput').on('keypress', (key) => {
@@ -49,8 +53,12 @@ $('document').ready(() => {
         const serverName = $('#newServerName').val();
         if(!serverName) {
             $('#newServerFailure').slideDown(() => {setTimeout(() => {$('#newServerFailure').sldeUp();},2000);});
+            return;
         }
+        //$.post(`/newServer/${uid}`)
     });
+
+    $('#newServerName')
 
 });
 
@@ -137,6 +145,8 @@ const getMessages = () => { // this is called in a loop, and checks if there has
             $('#messages').append(makeMessage(d['message'],d['username'],d['message_date'],d['edited']));
             $('#messages').append('<hr>');
         }
+        setTimeout(() => {$('html, body').scrollTop($(document).height(), 'slow');}, 500);
+        getPeople();
     });
 };
 
@@ -151,6 +161,7 @@ const initGetMessages = () => { // this is the initial call for when a server is
             $('#messages').append('<hr>');
         }
         setTimeout(() => {$('html, body').scrollTop($(document).height(), 'slow');}, 500);
+        getPeople();
     });
 };
 
@@ -196,3 +207,39 @@ const makeMessage = (msg, un, ts, e) => {
     newTag.append(username, message, timestamp, edited, editField);
     return newTag;
 }
+
+const getPeople = () => {
+    $.post(`getPeople/${currServer}`, null, (res) => {
+        console.log(res);
+        $('#peopleList').html('');
+        for(item in res) {
+            $('#peopleList').append(createPerson(res[item]['username'], res[item]['uid'], res[item]['role']));
+        }
+        // dropdown-item
+    });
+};
+
+const createPerson = (username, user_id, role) => {
+    //if(user_id==uid) return;
+    let newTag = document.createElement('div');
+    let name = document.createElement('a');
+    let changeRole = document.createElement('a');
+    let divider = document.createElement('div');
+    name.innerText = `${username} : ${role}`;
+    name.classList.add('dropdown-item');
+    changeRole.classList.add('dropdown-item');
+    changeRole.innerText = (role == 'admin') ? 'Role -> Admin' : 'Role -> User';
+    divider.classList.add('dropdown-divider');
+    newTag.append(name);
+    changeRole.addEventListener('click', () => {
+        $.post(`/changeRole/${user_id}/${currSrver}`, null, (res) => {
+            getPeople();
+        });
+    });
+    $.post(`/getRole/${uid}/${currServer}`, null, (res) => {
+        console.log(res);
+        if(res['role'] == 'admin') newTag.append(changeRole);
+        newTag.append(divider);
+    });
+    return newTag;
+};

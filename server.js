@@ -94,6 +94,7 @@ app.post('/getMessages/:uid/:server_id', (req, res) => {
     db.get(`select role, server_name from enrollments left join servers on servers.server_id = enrollments.server_id where uid = "${uid}" and enrollments.server_id = "${server_id}"`, (err, data) => {
         if(err || !data) {
             console.log(err);
+            res.send('err');
             return;
         };
         server_name = data['server_name'];
@@ -101,6 +102,7 @@ app.post('/getMessages/:uid/:server_id', (req, res) => {
         db.all(`select messages.message, messages.message_date, users.username, messages.edited from messages left join users on messages.uid = users.uid where server_id = "${server_id}"`, (err, msg_data) => {
             if(err) {
                 console.log(err);
+                res.send('err');
                 return;
             }
             res.json({'server_name': server_name, 'role': role, 'data': msg_data});
@@ -136,11 +138,12 @@ app.post('/logout/:uid', (req, res) => {
 });
 
 app.post('/updateMsg/:msg/:timestamp', (req, res) => {
-    db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, () => {
+    try {
+        db.run(`update "messages" set message = "${req.params.msg}", edited = "edited" where message_date = '${req.params.timestamp}'`, () => {
         modified = true;
         res.send('updated');
         setTimeout(() => {modified = false;}, 3000);
-    });
+    }); } catch (err) {res.send('err');}
 });
 
 app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
@@ -156,4 +159,37 @@ app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
     setTimeout(() => {modified = false;}, 3000);
     setTimeout(() => {lock = false;}, 1001);
     res.send('msg sent');
+});
+
+app.post('/getPeople/:server_id', (req, res) => {
+    db.all(`select users.username, enrollments.uid, enrollments.role from enrollments left join users on enrollments.uid = users.uid where enrollments.server_id = "${req.params.server_id}"`, (err, data) => {
+        if(err) {
+            res.send('err');
+            return;
+        }
+        res.json(data);
+    });
+});
+
+app.post('/getRole/:uid/:server_id', (req, res) => {
+    db.get(`select role from enrollments where uid = "${req.params.uid}" and server_id = "${req.params.server_id}"`, (err, data) => {
+        if(err) {
+            res.send('err');
+            return;
+        }
+        res.send(data);
+    });
+});
+
+app.post(`/changeRole/:user_id/:currSrver`, (req, res) => {
+    db.get(`select role from enrollments where uid = "${req.params.user_id}" and server_id = "${req.params.currSrver}"`, (err, data) => {
+        if(err) {
+            res.send('err');
+            return;
+        }
+        let newRole = (res['role'] == 'admin') ? 'user' : 'admin';
+        db.run(`update "enrollments" set role = "${newRole}" where uid = "${req.params.user_id}" and server_id = "${req.params.currSrver}"`, (data2, err2) => {
+            res.send('complete');
+        });
+    });
 });
