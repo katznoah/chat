@@ -40,13 +40,13 @@ $('document').ready(() => {
     });
 
     $('#sendButton').on('click', () => {
-        $.post(`newMsg/${$('#msgInputBox').val()}/${currServer}/${uid}`);
+        $.post(`newMsg/${new Date()}/${$('#msgInputBox').val()}/${currServer}/${uid}`);
         setTimeout(() => {$('html, body').scrollTop($(document).height(), 'slow');}, 500);
     });
 
     $('#msgInput').on('keypress', (key) => {
         if(key.keyCode != 13) return;
-        $.post(`newMsg/${$('#msgInputBox').val()}/${currServer}/${uid}`);
+        $.post(`newMsg/${new Date()}/${$('#msgInputBox').val()}/${currServer}/${uid}`);
     });
 
     $('#createSubmit').on('click', () => {
@@ -150,7 +150,7 @@ const getMessages = () => { // this is called in a loop, and checks if there has
     const server_num = window.location.hash.substring(1);
     $.post(`/getMessages/${uid}/${server_num}`, null, res => {
         if(res == 'nm') return;
-        $('#messages').html(`<h3>${res['server_name']}: ${server_num}</h3><hr>`);
+        $('#messages').html(`<br><h3>${res['server_name']}</h3><h4>code: ${server_num}</h4><hr>`);
         $('#messages').slideDown();
         for(datum in res['data']) {
             let d = (res['data'][datum]);
@@ -166,7 +166,7 @@ const initGetMessages = () => { // this is the initial call for when a server is
     const server_num = window.location.hash.substring(1);
     $.post(`/initGetMessages/${uid}/${server_num}`, null, res => {
         $('#messages').html('');
-        $('#messages').html(`<h3>${res['server_name']}: ${server_num}</h3><hr>`);
+        $('#messages').html(`<br><h3>${res['server_name']}</h3><h4>code: ${server_num}</h4><hr>`);
         $('#messages').slideDown();
         for(datum in res['data']) {
             let d = (res['data'][datum]);
@@ -187,7 +187,6 @@ const logout = () => {
 }
 
 const makeMessage = (msg, un, ts, e) => {
-    console.log(e);
     let newTag = document.createElement('li');
     let username = document.createElement('p');
     let message = document.createElement('p');
@@ -197,11 +196,27 @@ const makeMessage = (msg, un, ts, e) => {
     editField.classList.add('hidden');
     editField.placeholder = 'edit your message';
     newTag.classList.add('message');
+    let delButton = document.createElement('button');
+    delButton.classList.add('hidden');
+    delButton.classList.add('delButton');
+    delButton.innerText=('Delete Message');
+    delButton.addEventListener('click', () => {
+        $.post(`/delMessage/${ts}`, (res) => {
+            location.reload();
+        });
+    });
     setTimeout(() => {
         newTag.classList.add('messageA');
         newTag.addEventListener('click', () => {
-            if(editField.classList.contains('hidden'))
+            if(editField.classList.contains('hidden')){
                 editField.classList.remove('hidden');
+                delButton.classList.remove('hidden');
+            }
+            $.post(`/getRole/${uid}/${currServer}`, res => {
+                if(res['role']=='admin') {
+                    newTag.append(delButton);
+                }
+            });
         });
     }, 2000);
     editField.addEventListener('keypress', (key) => {
@@ -210,6 +225,7 @@ const makeMessage = (msg, un, ts, e) => {
         if(key.keyCode == 13) {
             $.post(`updateMsg/${newMsg}/${ts}`, () => {
                 editField.classList.add('hidden');
+                delButton.classList.add('hidden');
             });
         }
     });
@@ -223,7 +239,6 @@ const makeMessage = (msg, un, ts, e) => {
 
 const getPeople = () => {
     $.post(`getPeople/${currServer}`, null, (res) => {
-        console.log(res);
         $('#peopleList').html('');
         for(item in res) {
             $('#peopleList').append(createPerson(res[item]['username'], res[item]['uid'], res[item]['role']));
@@ -250,7 +265,6 @@ const createPerson = (username, user_id, role) => {
         });
     });
     $.post(`/getRole/${uid}/${currServer}`, null, (res) => {
-        console.log(res);
         if(res['role'] == 'admin') newTag.append(changeRole);
         newTag.append(divider);
     });

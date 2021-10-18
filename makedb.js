@@ -1,5 +1,5 @@
-//import sqlite3 from 'sqlite3';
-//let db = new sqlite3.Database("app.db");
+import sqlite3 from 'sqlite3';
+let db = new sqlite3.Database("app.db");
 
 //db.run(`drop table enrollments`);
 //db.run('drop table messages');
@@ -36,5 +36,8 @@ db.all('select server_id from servers', (err, data) => {
     console.log(max);
 });*/
 
-//db.run('delete from "servers" where server_id != "1337"');
-//db.all('select * from servers', (err, data) => {console.log(data)});
+db.run('delete from "enrollments" where server_id != "133"');
+db.run('delete from "messages" where server_id != "133"');
+db.run('delete from "users" where uid != "133"');
+db.run('delete from "servers" where server_id != "1337"');
+db.all('select * from servers', (err, data) => {console.log(data)});

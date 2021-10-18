@@ -145,7 +145,7 @@ app.post('/updateMsg/:msg/:timestamp', (req, res) => {
     });
 });
 
-app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
+app.post('/newMsg/:date/:msg/:server_id/:uid', (req, res) => {
     if(lock) {
         res.send('locked');
         return;
@@ -153,7 +153,7 @@ app.post('/newMsg/:msg/:server_id/:uid', (req, res) => {
     lock = true;
     modified = true;
     try {
-        db.run(`insert into "messages" values("${new Date()}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`, (err, data) => {
+        db.run(`insert into "messages" values("${req.params.date}", "${req.params.uid}", "${req.params.msg}", "${req.params.server_id}", "")`, (err, data) => {
 
         });
     } catch(err) {}
@@ -201,14 +201,16 @@ app.post(`/newServer/:uid/:serverName`, (req, res) => {
             res.send('ae');
             return;
         }
-        db.all('select server_id from servers', (err, data) => {
+        db.all('select server_id from servers', (err1, data1) => {
             let nums = [];
-            for(let item in data) {
-                nums.push(+(data[item]['server_id']));
+            for(let item in data1) {
+                nums.push(+(data1[item]['server_id']));
             }
             const max = (nums.sort((a,b) => a - b)[nums.length-1]) + 1;
-            db.run(`insert into "servers" values("${max}","${req.params.serverName}")`);
-            db.run(`insert into "enrollments" values("${max}","${req.params.uid}", "admin")`);
+            db.run(`insert into "servers" values("${max}","${req.params.serverName}")`, (data2, err2) => {
+            });
+            db.run(`insert into "enrollments" values("${max}","${req.params.uid}", "admin")`, (data3, err3) => {
+            });
             res.send('max');
         });        
     });
@@ -236,5 +238,16 @@ app.post('/register/:email/:pass', (req, res) => {
         res.send(creds['_tokenResponse']['localId']);
     }, (reason) => {
         res.send('f');
+    });
+});
+
+app.post('/delMessage/:timestamp', (req, res) => {
+    if(lock) return;
+    db.run(`delete from "messages" where message_date = "${req.params.timestamp}"`, (data, err) => {
+        modified = true;
+        lock = true;
+        setTimeout(() => {modified = false;}, 3000);
+        setTimeout(() => {lock = false;}, 1001);    
+        res.send(err || data);
     });
 });
